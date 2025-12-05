@@ -4,7 +4,7 @@ nproc_per_node=4
 # only support --padding_side left
 NPROC_PER_NODE=$nproc_per_node \
 swift sft \
-    --model Qwen/Qwen3-Reranker-4B \
+    --model Qwen/Qwen3-Reranker-0.6B \
     --task_type generative_reranker \
     --loss_type listwise_generative_reranker \
     --train_type full \
@@ -14,7 +14,7 @@ swift sft \
     --padding_side left \
     --eval_strategy steps \
     --output_dir output \
-    --eval_steps 100 \
+    --eval_steps 500 \
     --num_train_epochs 1 \
     --save_steps 200 \
     --per_device_train_batch_size 2 \

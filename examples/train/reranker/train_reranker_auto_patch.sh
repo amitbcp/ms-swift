@@ -1,4 +1,4 @@
-CUDA_VISIBLE_DEVICES=0 \
+CUDA_VISIBLE_DEVICES=2 \
 MAX_NEGATIVE_SAMPLES=1 \
 MAX_PIXELS=602112 \
 swift sft \
@@ -20,4 +20,4 @@ swift sft \
     --learning_rate 6e-6 \
     --label_names labels \
     --dataloader_drop_last true \
-    --attn_impl flash_attn
+    # --attn_impl flash_attn

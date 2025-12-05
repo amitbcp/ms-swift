@@ -230,6 +230,8 @@ def calculate_reranker_metrics(logits, labels):
     # Step 3: Calculate metrics for each query independently
     mrr_scores = []
     ndcg_scores = []
+    mrr_at_k = {1: [], 3: [], 5: [], 10: []}
+    ndcg_at_k = {1: [], 3: [], 5: [], 10: []}
 
     for query_idx, (query_logits, query_labels) in enumerate(query_groups):
         # Skip groups that are too small (need at least 1 positive + 1 negative)
@@ -251,6 +253,11 @@ def calculate_reranker_metrics(logits, labels):
         # Step 3c: Calculate MRR for this query
         mrr = 1.0 / pos_rank
         mrr_scores.append(mrr)
+        for k in mrr_at_k:
+            if pos_rank <= k:
+                mrr_at_k[k].append(mrr)
+            else:
+                mrr_at_k[k].append(0.0)
 
         # Step 3d: Calculate NDCG for this query
         def calculate_ndcg_single_query(relevance_scores, ranking):
@@ -276,6 +283,10 @@ def calculate_reranker_metrics(logits, labels):
         relevance_scores = query_labels.astype(float)
         ndcg = calculate_ndcg_single_query(relevance_scores, ranking)
         ndcg_scores.append(ndcg)
+        for k in ndcg_at_k:
+            truncated_ranking = ranking[:k]
+            ndcg_k = calculate_ndcg_single_query(relevance_scores, truncated_ranking)
+            ndcg_at_k[k].append(ndcg_k)
 
     # Step 4: Calculate mean metrics across all valid queries
     if len(mrr_scores) == 0:
@@ -285,10 +296,12 @@ def calculate_reranker_metrics(logits, labels):
     mean_mrr = np.mean(mrr_scores)
     mean_ndcg = np.mean(ndcg_scores)
 
-    return {
-        'mrr': mean_mrr,
-        'ndcg': mean_ndcg,
-    }
+    metrics = {'mrr': mean_mrr, 'ndcg': mean_ndcg}
+    for k in mrr_at_k:
+        metrics[f'mrr@{k}'] = float(np.mean(mrr_at_k[k]))
+        metrics[f'ndcg@{k}'] = float(np.mean(ndcg_at_k[k]))
+
+    return metrics
 
 
 def _parse_multi_negative_sentences(sentences, labels, hard_negatives=None):
